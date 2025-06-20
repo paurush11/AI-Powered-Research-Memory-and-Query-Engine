@@ -19,5 +19,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
+# Add and configure entrypoint
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
 # Default command can be overridden in docker-compose
 CMD ["gunicorn", "project_root.wsgi:application", "--bind", "0.0.0.0:8000"] 

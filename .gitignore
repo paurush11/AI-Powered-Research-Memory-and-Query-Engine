@@ -16,3 +16,33 @@
 ./frontend/src/assets
 ./frontend/src/components
 ./frontend/src/pages
+
+# ------------------------
+# IDE / Editor settings
+.vscode/
+.idea/
+*.sublime-*
+
+# macOS / OS artifacts
+.DS_Store
+
+# Python cache & build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+
+# Test / coverage artifacts
+.coverage
+htmlcov/
+coverage.xml
+.pytest_cache/
+
+# Logs
+*.log

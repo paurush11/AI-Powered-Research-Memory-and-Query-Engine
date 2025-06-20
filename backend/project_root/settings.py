@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from urllib.parse import urlparse
-
 from dotenv import load_dotenv
 
 # Load .env if present (optional for local dev)
@@ -24,6 +23,19 @@ INSTALLED_APPS = [
 
     "rest_framework",
 
+    # Third-party utilities
+    "corsheaders",          # CORS handling
+    "django_filters",       # DRF filtering
+    "django_extensions",    # shell_plus etc.
+    "guardian",             # object-level permissions
+    "axes",                 # brute-force protection
+    "debug_toolbar",        # dev toolbar
+    "drf_yasg",             # Swagger / OpenAPI docs
+
+    # Celery result / beat
+    "django_celery_results",
+    "django_celery_beat",
+
     # Project apps
     "upload",
     "jobs",
@@ -31,6 +43,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -38,6 +51,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Third-party middleware
+    "axes.middleware.AxesMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = "project_root.urls"
@@ -122,4 +138,22 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 # DuckDB
-DUCKDB_FILE = os.getenv("DUCKDB_FILE", str(BASE_DIR / "analytics.duckdb")) 
+DUCKDB_FILE = os.getenv("DUCKDB_FILE", str(BASE_DIR / "analytics.duckdb"))
+
+# Authentication backends (enable django-guardian object permissions & Axes)
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "guardian.backends.ObjectPermissionBackend",
+    "axes.backends.AxesBackend",
+]
+
+# CORS – allow all origins in dev; tighten in prod
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+# Debug toolbar – show only to localhost
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
+# Django-Guardian settings
+ANONYMOUS_USER_NAME = "anonymous" 

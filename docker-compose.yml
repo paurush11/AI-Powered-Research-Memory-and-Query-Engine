@@ -4,10 +4,8 @@ services:
   postgres:
     image: postgres:15
     restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: research_memory
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -22,12 +20,8 @@ services:
   backend:
     build: ./backend
     restart: always
-    environment:
-      DJANGO_SETTINGS_MODULE: project_root.settings
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/research_memory
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
-      DUCKDB_FILE: /data/analytics.duckdb
+    env_file:
+      - .env
     depends_on:
       - postgres
       - redis
@@ -41,12 +35,8 @@ services:
     build: ./backend
     restart: always
     command: celery -A project_root worker -l info -Q default
-    environment:
-      DJANGO_SETTINGS_MODULE: project_root.settings
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/research_memory
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
-      DUCKDB_FILE: /data/analytics.duckdb
+    env_file:
+      - .env
     depends_on:
       - redis
       - backend
@@ -57,8 +47,8 @@ services:
   frontend:
     build: ./frontend
     restart: always
-    environment:
-      NODE_ENV: development
+    env_file:
+      - .env
     ports:
       - "5173:5173"
     volumes:
@@ -69,16 +59,27 @@ services:
     build: ./backend
     command: celery -A project_root beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     restart: always
-    environment:
-      DJANGO_SETTINGS_MODULE: project_root.settings
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    env_file:
+      - .env
     depends_on:
       - redis
       - backend
+      - postgres
     volumes:
       - ./backend:/app
       - media_files:/app/media
+
+  flower:
+    image: mher/flower:1.2
+    restart: always
+    command: >
+      celery --broker=${CELERY_BROKER_URL} --result-backend=${CELERY_RESULT_BACKEND} flower --port=${FLOWER_PORT}
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    ports:
+      - "5555:5555"
 
 volumes:
   postgres_data:
