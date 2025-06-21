@@ -46,3 +46,7 @@ coverage.xml
 
 # Logs
 *.log
+
+
+postgres_data/
+client_secret.json

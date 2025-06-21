@@ -16,8 +16,8 @@ export function useQuery<TData = unknown, TError = AxiosError<ApiError>>(
         queryFn,
         ...restOptions,
     });
-    if (showErrorToast) {
-        const axiosError = result.error as AxiosError<ApiError>;
+    if (showErrorToast && result.error) {
+        const axiosError = result.error as unknown as AxiosError<ApiError>;
         const errorData = axiosError.response?.data;
 
         let errorMessageToShow = errorMessage;
@@ -33,13 +33,13 @@ export function useQuery<TData = unknown, TError = AxiosError<ApiError>>(
 
             errorMessageToShow = fieldErrors || axiosError.message || 'An error occurred';
         } else {
-            errorMessageToShow = axiosError.message || 'An error occurred';
+            errorMessageToShow = errorMessage || axiosError.message || 'An error occurred';
         }
 
         toast.error(errorMessageToShow);
     }
-    if (restOptions.onError) {
-        restOptions.onError(result.error as AxiosError<ApiError>);
+    if (restOptions.onError && result.error) {
+        restOptions.onError(result.error as unknown as AxiosError<ApiError>);
     }
 
     return result;

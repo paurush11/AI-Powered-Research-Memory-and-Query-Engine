@@ -1,6 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { toast } from 'react-hot-toast';
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export interface ApiError {
     errors?: Record<string, string[]>;
@@ -45,7 +44,6 @@ apiClient.interceptors.response.use(
     (response) => response,
     (error: AxiosError<ApiError>) => {
         const errorMessage = getErrorMessage(error)
-        toast.error(errorMessage)
         return Promise.reject(error)
     }
 )

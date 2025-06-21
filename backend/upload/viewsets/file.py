@@ -8,18 +8,18 @@ import os
 from django.conf import settings
 
 class FileViewSet(viewsets.ModelViewSet):
-    queryset = File.objects.all()
+    queryset = File.objects.all() #type: ignore
     serializer_class = FileSerializer
     parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer):
-        uploaded_file = self.request.FILES['file']
+        uploaded_file = self.request.FILES['file'] #type: ignore
         user = self.request.user
         
         # Generate file metadata
-        file_name = uploaded_file.name
+        file_name = uploaded_file.name #type: ignore
         file_extension = os.path.splitext(file_name)[1].lower()
-        file_size = uploaded_file.size
+        file_size = uploaded_file.size #type: ignore
 
         # Save to provider (local, S3, etc.)
         upload_result = upload_to_storage(uploaded_file, user.id)

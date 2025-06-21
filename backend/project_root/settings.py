@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from urllib.parse import urlparse
+from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me")
 DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '0.0.0.0,127.0.0.1,localhost').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -21,7 +22,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "storages",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",          # CORS handling
+    "bulk_update_or_create", # bulk update or create
     "django_filters",       # DRF filtering
     "django_extensions",    # shell_plus etc.
     "guardian",             # object-level permissions
@@ -30,6 +34,7 @@ INSTALLED_APPS = [
     "drf_yasg",             # Swagger / OpenAPI docs
     "django_celery_results",
     "django_celery_beat",
+    "social_django",
     "core",
     "upload",
     "jobs",
@@ -48,6 +53,7 @@ MIDDLEWARE = [
     # Third-party middleware
     "axes.middleware.AxesMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "core.middleware.auth_middleware.TokenAuthMiddleware",
 ]
 
 ROOT_URLCONF = "project_root.urls"
@@ -70,10 +76,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "project_root.wsgi:application"
 
-# Database
 DATABASE_URL = os.getenv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/research_memory")
 url = urlparse(DATABASE_URL)
-
+# Database
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -158,6 +163,7 @@ elif STORAGE_BACKEND == "azure":
 # REST framework defaults
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -181,15 +187,145 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "guardian.backends.ObjectPermissionBackend",
     "axes.backends.AxesBackend",
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.facebook.FacebookOAuth2',
 ]
 
-# CORS – allow all origins in dev; tighten in prod
-CORS_ALLOW_ALL_ORIGINS = DEBUG
 # Debug toolbar – show only to localhost
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
 # Django-Guardian settings
 ANONYMOUS_USER_NAME = "anonymous"
 # Custom user model
-AUTH_USER_MODEL = "core.User" 
+AUTH_USER_MODEL = "core.User"
+
+# ---------------------------------------------------------------------------
+# Simple JWT configuration (used by AuthService for cookie expiry calculations)
+# ---------------------------------------------------------------------------
+
+SOCIAL_AUTH_PIPELINE = (
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.user.get_username',
+    'social_core.pipeline.user.create_user',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.user.user_details',
+)
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "CSRF_COOKIE_AGE": 60 * 60 * 24,  # 1 day in seconds
+}
+
+# ---------------------------------------------------------------------------
+# Cookie / CSRF behaviour
+# ---------------------------------------------------------------------------
+
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_DOMAIN = None
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_PATH = '/'
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# CORS – allow all origins in dev; tighten in prod
+CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+]
+
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+]
+# ---------------------------------------------------------------------------
+# Google OAuth keys (expected by AuthService)
+# ---------------------------------------------------------------------------
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("GOOGLE_CLIENT_ID", "")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+BACKEND_REDIRECT_URI = os.getenv("GOOGLE_BACKEND_REDIRECT_URI", "http://localhost:8000/api/auth/google-auth-callback/")
+FRONTEND_REDIRECT_URI = os.getenv("GOOGLE_FRONTEND_REDIRECT_URI", "http://localhost:5173/") 
+
+
+
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
