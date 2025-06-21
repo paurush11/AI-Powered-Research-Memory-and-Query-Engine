@@ -3,7 +3,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 
-# Load .env if present (optional for local dev)
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +19,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
+    "storages",
     "rest_framework",
-
-    # Third-party utilities
     "corsheaders",          # CORS handling
     "django_filters",       # DRF filtering
     "django_extensions",    # shell_plus etc.
@@ -31,12 +28,9 @@ INSTALLED_APPS = [
     "axes",                 # brute-force protection
     "debug_toolbar",        # dev toolbar
     "drf_yasg",             # Swagger / OpenAPI docs
-
-    # Celery result / beat
     "django_celery_results",
     "django_celery_beat",
-
-    # Project apps
+    "core",
     "upload",
     "jobs",
     "chat",
@@ -119,6 +113,48 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# ----------------------------------------------------------------------------
+# File storage – Amazon S3 / Google Cloud Storage / Azure Blob via django-storages
+# ----------------------------------------------------------------------------
+
+# Select backend via STORAGE_BACKEND env variable: "aws", "gcp", "azure", or
+# leave unset/"local" to use default FileSystemStorage.
+
+STORAGE_BACKEND = os.getenv("STORAGE_BACKEND", "local").lower()
+
+if STORAGE_BACKEND == "aws":
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")
+    AWS_QUERYSTRING_AUTH = os.getenv("AWS_QUERYSTRING_AUTH", "False") == "True"
+
+elif STORAGE_BACKEND == "gcp":
+    DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+    GS_BUCKET_NAME = os.getenv("GS_BUCKET_NAME")
+    GS_PROJECT_ID = os.getenv("GS_PROJECT_ID")
+    GS_CREDENTIALS_FILE = os.getenv("GS_CREDENTIALS_FILE")
+    if GS_CREDENTIALS_FILE:
+        try:
+            from google.oauth2 import service_account  # noqa: WPS433 (runtime import)
+
+            GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+                GS_CREDENTIALS_FILE,
+            )
+        except ModuleNotFoundError:
+            # google-cloud-storage not installed – will raise at runtime if used
+            GS_CREDENTIALS = None
+
+elif STORAGE_BACKEND == "azure":
+    DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
+
+    AZURE_ACCOUNT_NAME = os.getenv("AZURE_ACCOUNT_NAME")
+    AZURE_ACCOUNT_KEY = os.getenv("AZURE_ACCOUNT_KEY")
+    AZURE_CONTAINER = os.getenv("AZURE_CONTAINER")
+
+
 # REST framework defaults
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -149,11 +185,11 @@ AUTHENTICATION_BACKENDS = [
 
 # CORS – allow all origins in dev; tighten in prod
 CORS_ALLOW_ALL_ORIGINS = DEBUG
-
 # Debug toolbar – show only to localhost
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
-
 # Django-Guardian settings
-ANONYMOUS_USER_NAME = "anonymous" 
+ANONYMOUS_USER_NAME = "anonymous"
+# Custom user model
+AUTH_USER_MODEL = "core.User" 

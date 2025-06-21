@@ -23,6 +23,7 @@ app.conf.task_routes = {
     "jobs.tasks.*": {"queue": "jobs_tasks"},
     "upload.tasks.*": {"queue": "upload_tasks"},
     "chat.tasks.*": {"queue": "chat_tasks"},
+    "core.tasks.*": {"queue": "core_tasks"},
 }
 
 

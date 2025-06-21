@@ -20,7 +20,7 @@ social-auth-app-django==5.4.0
 # --------------------
 psycopg2-binary==2.9.10
 duckdb==1.3.1
-pyarrow==17.0.0
+pyarrow==20.0.0
 drf-yasg==1.21.10
 jsonschema==4.23.0
 python-dotenv==1.0.1
@@ -49,8 +49,12 @@ whitenoise==6.5.0
 # --------------------
 # File / image handling
 # --------------------
-Pillow==10.0.0
+Pillow==11.2.1
 python-magic==0.4.27
+django-storages[boto3]==1.14.2
+boto3==1.34.120
+google-cloud-storage==2.16.0
+azure-storage-blob==12.19.1
 
 # --------------------
 # AI / LLM tooling
@@ -68,3 +72,13 @@ python-box==7.1.1
 pytest==8.3.1
 coverage==7.4.0
 freezegun==1.2.2
+
+# --------------------
+# Analysis and Excel
+# --------------------
+
+pandas==2.3.0
+numpy==2.3.0
+xlsxwriter==3.2.5
+openpyxl==3.1.5
+
