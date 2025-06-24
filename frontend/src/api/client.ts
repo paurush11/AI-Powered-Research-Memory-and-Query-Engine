@@ -76,6 +76,7 @@ export interface MutationOptions<TData, TVariables> {
     errorMessage?: string;
     onSuccess?: (data: TData, variables: TVariables) => void;
     onError?: (error: AxiosError<ApiError>, variables: TVariables, formattedError: { message: string; fieldErrors?: Record<string, string[]> }) => void;
+    invalidateQueries?: readonly unknown[] | undefined;
     [key: string]: any;
 }
 

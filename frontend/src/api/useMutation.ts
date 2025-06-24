@@ -1,4 +1,4 @@
-import { useMutation as useTanstackMutation } from '@tanstack/react-query'
+import { useMutation as useTanstackMutation, useQueryClient } from '@tanstack/react-query'
 import { AxiosError } from 'axios'
 import { ApiError, MutationOptions, FormattedError } from './client'
 import { toast } from 'react-hot-toast';
@@ -34,6 +34,7 @@ export function useMutation<TData = unknown, TVariables = void, TError = AxiosEr
     mutationFn: (variables: TVariables) => Promise<TData>,
     options?: MutationOptions<TData, TVariables>
 ) {
+    const queryClient = useQueryClient();
     const {
         showSuccessToast = true,
         showErrorToast = true,
@@ -41,6 +42,7 @@ export function useMutation<TData = unknown, TVariables = void, TError = AxiosEr
         errorMessage,
         onSuccess,
         onError,
+        invalidateQueries,
         ...restOptions } = options || {};
 
 
@@ -50,6 +52,17 @@ export function useMutation<TData = unknown, TVariables = void, TError = AxiosEr
             if (showSuccessToast && successMessage) {
                 toast.success(successMessage);
             }
+
+            if (invalidateQueries) {
+                if (Array.isArray(invalidateQueries)) {
+                    invalidateQueries.forEach(queryKey => {
+                        queryClient.invalidateQueries({ queryKey });
+                    });
+                } else {
+                    queryClient.invalidateQueries({ queryKey: invalidateQueries });
+                }
+            }
+
             if (onSuccess) {
                 onSuccess(data, variables);
             }

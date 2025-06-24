@@ -1,5 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Layout from './components/Layout';
 import Modal from './components/Modal';
 import LoginForm from './components/Auth/LoginForm';
@@ -7,6 +6,10 @@ import RegisterForm from './components/Auth/RegisterForm';
 import { useAuth } from './api/auth/auth';
 import ProjectsPage from './components/Projects/ProjectsPage';
 import { ModalProvider } from './context/ModalContext';
+import ProjectView from './components/Projects/ProjectView';
+import FileMetadata from './components/Upload/FileMetadata';
+import Analysis from './components/Analysis/Analysis';
+import ProjectSettings from './components/Settings/ProjectSettings';
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -42,85 +45,46 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
     return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>;
 };
 
-// Dashboard component
-const Dashboard = () => {
-    const { currentUser } = useAuth();
-
-    return (
+// Layout wrappers to avoid repetition
+const ProtectedLayout = () => (
+    <ProtectedRoute>
         <Layout>
-            <div className="p-4 space-y-4">
-                <h1 className="text-2xl font-bold">Research Memory</h1>
-                <div>
-                    <p className="text-gray-700">
-                        Welcome back, {currentUser?.first_name || currentUser?.username || currentUser?.email}!
-                        Upload your documents and start asking questions.
-                    </p>
-                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                        <h2 className="text-lg font-semibold text-green-800">Getting Started</h2>
-                        <ul className="mt-2 text-green-700 space-y-1">
-                            <li>• Upload documents using the file manager</li>
-                            <li>• Ask questions about your uploaded content</li>
-                            <li>• View your research history and analysis</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div className="flex gap-4">
-                    <button
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                        onClick={() => toast.success('This is a success toast!')}
-                    >
-                        Show Toast
-                    </button>
-                </div>
-            </div>
-            <Modal />
+            <Outlet />
         </Layout>
-    );
-};
+    </ProtectedRoute>
+);
+
+const AuthLayout = () => (
+    <AuthRoute>
+        <Layout>
+            <Outlet />
+        </Layout>
+    </AuthRoute>
+);
+
 
 function App() {
     return (
         <ModalProvider>
             <Router>
                 <Routes>
-                    {/* Protected Routes */}
-                    <Route
-                        path="/"
-                        element={
-                            <ProtectedRoute>
-                                <Dashboard />
-                            </ProtectedRoute>
-                        }
-                    />
+                    {/* Protected routes share ProtectedLayout */}
+                    <Route element={<ProtectedLayout />}>
+                        <Route index element={<ProjectsPage selectedTab="files" />} />
+                        <Route path="projects" element={<ProjectsPage selectedTab="files" />} />
+                        <Route path="projects/analysis" element={<ProjectsPage selectedTab="analysis" />} />
+                        <Route path="projects/settings" element={<ProjectsPage selectedTab="settings" />} />
+                        <Route path="projects/:projectId" element={<ProjectView selectedTab="files" />} />
+                        <Route path="projects/:projectId/files/:fileId" element={<FileMetadata />} />
+                        <Route path="projects/analysis/:projectId" element={<Analysis />} />
+                        <Route path="projects/settings/:projectId" element={<ProjectSettings />} />
+                    </Route>
 
-                    {/* Auth Routes */}
-                    <Route
-                        path="/login"
-                        element={
-                            <AuthRoute>
-                                <LoginForm />
-                            </AuthRoute>
-                        }
-                    />
-                    <Route
-                        path="/register"
-                        element={
-                            <AuthRoute>
-                                <RegisterForm />
-                            </AuthRoute>
-                        }
-                    />
-
-                    {/* Projects Route */}
-                    <Route
-                        path="/projects"
-                        element={
-                            <ProtectedRoute>
-                                <ProjectsPage />
-                            </ProtectedRoute>
-                        }
-                    />
+                    {/* Auth routes share AuthLayout */}
+                    <Route element={<AuthLayout />}>
+                        <Route path="login" element={<LoginForm />} />
+                        <Route path="register" element={<RegisterForm />} />
+                    </Route>
 
                     {/* Catch all route */}
                     <Route path="*" element={<Navigate to="/" replace />} />

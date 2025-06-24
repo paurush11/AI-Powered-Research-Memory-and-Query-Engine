@@ -171,6 +171,10 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Bulk update or create
+BULK_UPDATE_OR_CREATE_BATCH_SIZE = 1000
+
+
 # Celery
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
@@ -219,7 +223,7 @@ SOCIAL_AUTH_PIPELINE = (
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,

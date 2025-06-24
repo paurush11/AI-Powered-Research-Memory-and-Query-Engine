@@ -1,11 +1,11 @@
 import React, { PropsWithChildren } from 'react';
-import Navbar from './Navbar';
+import Sidebar from './Sidebar';
 
 const Layout: React.FC<PropsWithChildren> = ({ children }) => {
     return (
-        <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1 container mx-auto w-full px-4 lg:px-8">
+        <div className="h-screen flex bg-gray-50 overflow-hidden">
+            <Sidebar />
+            <main className="flex-1 flex flex-col overflow-y-auto">
                 {children}
             </main>
         </div>

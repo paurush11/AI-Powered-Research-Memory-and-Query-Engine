@@ -1,5 +1,5 @@
 from upload.models import Project, File
-from upload.serializers.project import ProjectSerializer
+from upload.serializers.project import ProjectSerializer, BulkProjectSerializer
 
 class ProjectService:
     def create_project(self, project_data):
@@ -25,3 +25,10 @@ class ProjectService:
     
     def get_all_projects(self, user_id):
         return Project.objects.filter(user_id=user_id) #type: ignore
+
+    def bulk_create_projects(self, projects_data):
+        serializer = BulkProjectSerializer(data=projects_data)
+        if serializer.is_valid():
+            serializer.save()
+            return serializer.data
+        return None

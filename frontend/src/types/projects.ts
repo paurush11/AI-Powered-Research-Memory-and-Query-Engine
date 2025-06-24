@@ -1,16 +1,22 @@
+export enum ProjectStatus {
+    DRAFT = 'draft',
+    PUBLISHED = 'published',
+    ARCHIVED = 'archived',
+}
+
 export interface Project {
     id: string;
     name: string;
     description?: string;
-    status: 'draft' | 'published' | 'archived';
+    status: ProjectStatus;
     is_deleted: boolean;
-    is_archived: boolean;
     is_pinned: boolean;
     is_favorite: boolean;
     is_shared: boolean;
     user_id: string;
     created_at: string;
     updated_at: string;
+    is_selected?: boolean;
 }
 
 export interface CreateProjectRequest {
